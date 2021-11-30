@@ -8,12 +8,12 @@ class MissingArgumentError(ArgumentError):
     pass
 
 class CommandResult:
-    def __init__(self, commands, args = [], flags = []) -> None:
+    def __init__(self) -> None:
         '''
         '''
-        self.commands = commands
-        self.args = args
-        self.flags = flags
+        self.commands = []
+        self.args = []
+        self.flags = []
 
     def extend(self, other) -> None:
         '''
@@ -67,7 +67,8 @@ class Command:
         if self.name != c_args[0]:
             return None 
 
-        result = CommandResult([self.name])
+        result = CommandResult()
+        result.commands.append(self.name)
 
         i = 1
         while i < len(c_args):
@@ -88,9 +89,6 @@ class Command:
 
                 # if we got a value then we've finished processing
                 r = self.subcommands[arg].parse_args(c_args[i:])
-                if r == None:
-                    raise TypeError
-
                 result.extend(r)
                 return result
 
@@ -103,10 +101,14 @@ class Command:
 
             i = i + 1
 
-        if self.expected_args < 0 and len(result.args) == 0:
-            raise MissingArgumentError("Command {} expected at least 1 arg, none given"\
-                .format(self.name))
-        elif len(result.args) != self.expected_args:
+        if self.expected_args < 0:# and len(result.args) == 0:
+            if len(result.args) == 0:
+                raise MissingArgumentError("Command {} expected at least 1 arg, none given"\
+                    .format(self.name))
+        elif len(result.args) < self.expected_args:
+            raise MissingArgumentError("Command {} expected {} args, {} given"\
+                .format(self.name, self.expected_args, len(result.args)))
+        elif len(result.args) > self.expected_args:
             raise UnexpectedArgumentError("Command {} expected {} args, {} given"\
                 .format(self.name, self.expected_args, len(result.args)))
 

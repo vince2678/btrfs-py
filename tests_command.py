@@ -25,26 +25,26 @@ class TestCases(unittest.TestCase):
         parent_command = Command("snapshot", subcommands=subcommands)
         # snapshot create [-R|--recursive]|[-r|--read-only] [source] [dest]
 
-        #with self.assertRaises(UnexpectedArgumentError):
-        #    parent_command.parse_args("snapshot", "blurgh", "create", "/source", "/target")
+        with self.assertRaises(UnexpectedArgumentError):
+            parent_command.parse_args(["snapshot", "blurgh", "create", "/source", "/target"])
 
         with self.assertRaises(MissingArgumentError):
-            parent_command.parse_args("snapshot", "create")
+            parent_command.parse_args(["snapshot", "create"])
 
         with self.assertRaises(MissingArgumentError):
-            parent_command.parse_args("snapshot", "create", "-R")
+            parent_command.parse_args(["snapshot", "create", "-R"])
 
         with self.assertRaises(MissingArgumentError):
-            parent_command.parse_args("snapshot", "create", "-R", "/")
+            parent_command.parse_args(["snapshot", "create", "-R", "/"])
 
         with self.assertRaises(UnexpectedArgumentError):
-            parent_command.parse_args("snapshot", "create", "/source", "/target", "/target")
+            parent_command.parse_args(["snapshot", "create", "/source", "/target", "/target"])
 
         with self.assertRaises(MissingArgumentError):
-            parent_command.parse_args("snapshot", "delete", "-R")
+            parent_command.parse_args(["snapshot", "delete", "-R"])
 
         with self.assertRaises(MissingArgumentError):
-            parent_command.parse_args("snapshot", "delete")
+            parent_command.parse_args(["snapshot", "delete"])
 
     def test_command_result(self) -> None:
         '''
@@ -56,35 +56,35 @@ class TestCases(unittest.TestCase):
 
         parent_command = Command("snapshot", subcommands=subcommands)
 
-        parsed = parent_command.parse_args("snapshot", "create", "-R", "/source", "/target")
+        parsed = parent_command.parse_args(["snapshot", "create", "-R", "/source", "/target"])
         self.assertEqual(parsed.commands, ["snapshot", "create"])
         self.assertEqual(parsed.args, ["/source", "/target"])
         self.assertEqual(parsed.flags, ["-R"])
 
-        parsed = parent_command.parse_args("snapshot", "list")
+        parsed = parent_command.parse_args(["snapshot", "list"])
         self.assertEqual(parsed.commands, ["snapshot", "list"])
         self.assertEqual(parsed.args, [])
         self.assertEqual(parsed.flags, [])
 
-        parsed = parent_command.parse_args("snapshot", "create", "/source", "/target")
+        parsed = parent_command.parse_args(["snapshot", "create", "/source", "/target"])
         self.assertEqual(parsed.commands, ["snapshot", "create"])
         self.assertEqual(parsed.args, ["/source", "/target"])
         self.assertEqual(parsed.flags, [])
 
-        parsed = parent_command.parse_args("snapshot", "delete", "/snapshot")
+        parsed = parent_command.parse_args(["snapshot", "delete", "/snapshot"])
         self.assertEqual(parsed.commands, ["snapshot", "delete"])
         self.assertEqual(parsed.args, ["/snapshot"])
         self.assertEqual(parsed.flags, [])
 
-        parsed = parent_command.parse_args("snapshot", "delete", "-R", "/snapshot1", "/snapshot2")
+        parsed = parent_command.parse_args(["snapshot", "delete", "-R", "/snapshot1", "/snapshot2"])
         self.assertEqual(parsed.commands, ["snapshot", "delete"])
         self.assertEqual(parsed.args, ["/snapshot1", "/snapshot2"])
         self.assertEqual(parsed.flags, ["-R"])
 
-        parsed = parent_command.parse_args("snapshot", "delete", "/snapshot1", "/snapshot2", "-r")
+        parsed = parent_command.parse_args(["snapshot", "delete", "/snapshot1", "/snapshot2", "-R"])
         self.assertEqual(parsed.commands, ["snapshot", "delete"])
         self.assertEqual(parsed.args, ["/snapshot1", "/snapshot2"])
-        self.assertEqual(parsed.flags, ["-r"])
+        self.assertEqual(parsed.flags, ["-R"])
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
