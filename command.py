@@ -47,7 +47,7 @@ class Command:
     def add_flag(self, flag) -> None:
         self.flags.add(flag)
 
-    def parse_args(self, args) -> CommandResult:
+    def parse_args(self, args = []) -> CommandResult:
         ''' Parse args specified, where args is an iterable, and
             return a list of CommandResult, or None if parsing failed.
 

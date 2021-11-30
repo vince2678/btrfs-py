@@ -1,5 +1,5 @@
 import sys
-import command
+from command import *
 import btrfsutil
 
 def usage():
@@ -60,4 +60,42 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         usage()
 
-    pass
+    subcommands = []
+    subcommands.append(Command("delete", -1, flags = ["--recursive", "-R"]))
+    subcommands.append(Command("create", 2, ["-r", "-R", "--recursive", "--read-only"]))
+
+    parent_command = Command("snapshot", subcommands=subcommands)
+
+    result = parent_command.parse_args()
+    if not result:
+        usage()
+
+    read_only = False
+    recursive = False
+
+    if '-R' in result.flags or '--recursive' in result.flags:
+        recursive = True
+        read_only = False
+    elif '-r' in result.flags or '--readonly' in result.flags:
+        read_only = True
+        recursive = False
+
+    if result.commands[1] == "create":
+        source = result.args[0]
+        dest = result.args[1]
+
+        if not is_subvolume(source):
+            print("{} is not a subvolume".format(source))
+            exit(1)
+
+        create_snapshot(source, dest, recursive=recursive, read_only=read_only)
+    elif result.commands[1] == "delete":
+        ret = 0
+        for path in result.args:
+            if is_subvolume(path):
+                delete_subvolume(path, recursive=recursive)
+            else:
+                print("{} is not a subvolume".format(path))
+                ret = 1
+
+        exit(ret)
