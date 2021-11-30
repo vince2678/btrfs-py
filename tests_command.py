@@ -4,16 +4,6 @@ from command import *
 
 class TestCases(unittest.TestCase):
 
-    def test_height(self) -> None:
-        '''
-        '''
-
-        subcommands = []
-        subcommands.append(Command("delete", -1, flags = ["--recursive", "-R"]))
-        subcommands.append(Command("create", 2, ["-r", "-R", "--recursive", "--read-only"]))
-
-        self.assertEquals(Command("snapshot", subcommands=subcommands).height(), 2)
-
     def test_conflicting_args(self) -> None:
         '''
         '''
@@ -68,6 +58,7 @@ class TestCases(unittest.TestCase):
         self.assertEqual(len(parsed.args), 2)
         self.assertEqual(parsed.args[0], "/source")
         self.assertEqual(parsed.args[1], "/target")
+        self.assertEqual(parsed.)
 
         parsed = parent_command.parse_args("snapshot", "create", "/source", "/target")
         parsed = parent_command.parse_args("snapshot", "delete", "/snapshot")

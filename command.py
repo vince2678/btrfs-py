@@ -18,6 +18,13 @@ class CommandResult:
         self.args = args
         self.flags = flags
 
+    def extend(self, other) -> None:
+        '''
+        '''
+        self.commands.extend(other.commands)
+        self.args.extend(other.args)
+        self.flags.extend(other.flags)
+
 #class Flag:
 #    def __init__(self, flag, *aliases) -> None:
 #        ''' Initialise a flag, and any aliases
@@ -41,25 +48,6 @@ class Command:
         self.subcommands = {v.name:v for v in subcommands}
         #self.subcommands = subcommands
         self.help = help
-
-    def height(self) -> int:
-        ''' Return the max height of the graph
-        >>> c = Command("test")
-        >>> c.height()
-        1
-        >>> c.add_subcommand(Command("new"))
-        >>> c.height()
-        2
-        '''
-        maxHeight = 0
-
-        for c in self.subcommands.values():
-            h = c.height()
-
-            if maxHeight < h:
-                maxHeight = h
-
-        return 1 + maxHeight
     
     def add_subcommand(self, command) -> None:
         '''
@@ -71,7 +59,7 @@ class Command:
 
     def parse_args(self, *args) -> CommandResult:
         ''' Parse args specified, where args is an iterable, and
-            return a list of CommandResult.
+            return a list of CommandResult, or None if parsing failed.
 
             If args is not specified, sys.argv is used
         '''
@@ -80,8 +68,9 @@ class Command:
 class CommandTree:
 
     def __init__(self, commands, *args) -> None:
-
-        self.commands = commands
+        '''
+        '''
+        self.commands = {c.name:c for c in commands}
 
         if len(args) == 0:
             import sys
@@ -89,51 +78,69 @@ class CommandTree:
         else:
             self.args = list(args)
 
-    def parse_args(self) -> list:
+    def parse_args(self) -> CommandResult:
         ''' Parse args specified, where args is an iterable, and
             return a list of CommandResult.
 
             If args is not specified, sys.argv is used
         '''
-        ret = []
-
-        for command in self.commands:
-            result = self._parse_args(command, self.args)
-            if result:
-                ret.append(result)
-
-#        return [self._parse_args(c, self.args) for c in self.commands]
-        return ret
+        key = self.args
+        if key in self.commands.keys():
+            return self._parse_args(self.commands[key], self.args)
+        
+        return None
 
     def _parse_args(self, command, args) -> CommandResult:
         '''
         '''
-
         #if not command.name.startswith(args[0]):
-        if command.name != args[0]:
-            return None
 
-        res = CommandResult(command.name)
+        commands = []
+        args = []
+        flags = []
+
+
+        i = 1
+        while i < len(args):
+            arg = args[i]
+
+            # check if flag
+            if arg in command.flags:
+                flags.append(arg)
+            # check if subcommand
+            elif arg in command.subcommands:
+                r = command.subcommands[arg].parse_args()
+
+                if r:
+                    commands.extend(r.commands)
+                    args.extend(r.args)
+                    flags.extend(r.flags)
+
+
+
+        return CommandResult(commands, args, flags)
+
+        ##################
 
         i = 1
         while i < len(args):
             arg = args[i]
             # check if any of the following args are flags
             if arg in command.flags: #TODO: Flags strictly should come before required  args
-                res.flags.add(arg)
+                result.flags.add(arg)
             # check if the arg is a subcommand
             elif arg in command.subcommands:
                 subcommand_result = self._parse_args(command.subcommand[arg], args[1:])
                 # process subcommand
                 if subcommand_result:
-                    res.subcommand_results[subcommand_result.name] = subcommand_result
+                    result.extend(subcommand_result)
                 break
             # save arg if we're expecting any
             elif command.expected_args < 0:
-                res.args.extend(args[i:])
+                result.args.extend(args[i:])
                 break
             elif command.expected_args > 0:
-                res.args.append(arg)
+                result.args.append(arg)
             # user did something stupid
             else: #TODO: Is this necessary/reachable?
                 raise UnexpectedArgumentError("Command {} got unexpected argument {}"\
@@ -141,11 +148,11 @@ class CommandTree:
 
             i = i + 1
             
-        if command.expected_args < 0 and len(res.args) == 0:
+        if command.expected_args < 0 and len(result.args) == 0:
             raise MissingArgumentError("Command {} expected at least 1 arg, none given"\
                 .format(command.name))
-        elif len(res.args) != command.expected_args:
+        elif len(result.args) != command.expected_args:
             raise ArgumentCountError("Command {} expected {} args, {} given"\
                 .format(command.name, command.expected_args, len(args) - 1))
 
-        return res
+        return result
