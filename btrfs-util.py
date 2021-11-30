@@ -1,5 +1,5 @@
 import sys
-import command_tree
+import command
 import btrfsutil
 
 def usage():
