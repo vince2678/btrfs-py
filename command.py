@@ -22,11 +22,6 @@ class CommandResult:
         self.args.extend(other.args)
         self.flags.extend(other.flags)
 
-#class Flag:
-#    def __init__(self, flag, *aliases) -> None:
-#        ''' Initialise a flag, and any aliases
-#        '''
-
 class Command:
 
     def __init__(self, name, expected_args = 0, flags = [], subcommands = []) -> None:
@@ -74,7 +69,7 @@ class Command:
         while i < len(c_args):
             arg = c_args[i]
 
-            # check if flag.
+            # check if arg is a flag.
             # we should allow flags for the parent cmd to come
             # before subcommands, and not the other way round
             if arg in self.flags:
@@ -93,23 +88,19 @@ class Command:
                 return result
 
             #  check if we got an unexpected # of args
-            #elif self.expected_args >= 0 and len(result.args) + 1 > self.expected_args:
-            #    raise UnexpectedArgumentError("Command {} got unexpected argument {}"\
-            #        .format(self.name, arg))
+            elif self.expected_args >= 0 and len(result.args) + 1 > self.expected_args:
+                raise UnexpectedArgumentError("Command {} got unexpected argument {}"\
+                    .format(self.name, arg))
             else:
                 result.args.append(arg)
 
             i = i + 1
 
-        if self.expected_args < 0:# and len(result.args) == 0:
-            if len(result.args) == 0:
-                raise MissingArgumentError("Command {} expected at least 1 arg, none given"\
-                    .format(self.name))
+        if self.expected_args < 0 and len(result.args) == 0:
+            raise MissingArgumentError("Command {} expected at least 1 arg, none given"\
+                .format(self.name))
         elif len(result.args) < self.expected_args:
             raise MissingArgumentError("Command {} expected {} args, {} given"\
-                .format(self.name, self.expected_args, len(result.args)))
-        elif len(result.args) > self.expected_args:
-            raise UnexpectedArgumentError("Command {} expected {} args, {} given"\
                 .format(self.name, self.expected_args, len(result.args)))
 
         return result
