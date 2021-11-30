@@ -7,7 +7,6 @@ class TestCases(unittest.TestCase):
     def test_conflicting_args(self) -> None:
         '''
         '''
-
         subcommands = []
         subcommands.append(Command("delete", -1, flags = ["--recursive", "-R"]))
         subcommands.append(Command("create", 2, ["-r", "-R", "--recursive", "--read-only"]))
@@ -26,6 +25,9 @@ class TestCases(unittest.TestCase):
         parent_command = Command("snapshot", subcommands=subcommands)
         # snapshot create [-R|--recursive]|[-r|--read-only] [source] [dest]
 
+        #with self.assertRaises(UnexpectedArgumentError):
+        #    parent_command.parse_args("snapshot", "blurgh", "create", "/source", "/target")
+
         with self.assertRaises(MissingArgumentError):
             parent_command.parse_args("snapshot", "create")
 
@@ -35,7 +37,7 @@ class TestCases(unittest.TestCase):
         with self.assertRaises(MissingArgumentError):
             parent_command.parse_args("snapshot", "create", "-R", "/")
 
-        with self.assertRaises(ArgumentCountError):
+        with self.assertRaises(UnexpectedArgumentError):
             parent_command.parse_args("snapshot", "create", "/source", "/target", "/target")
 
         with self.assertRaises(MissingArgumentError):
@@ -50,20 +52,39 @@ class TestCases(unittest.TestCase):
         subcommands = []
         subcommands.append(Command("delete", -1, flags = ["--recursive", "-R"]))
         subcommands.append(Command("create", 2, ["-r", "-R", "--recursive", "--read-only"]))
+        subcommands.append(Command("list", 0))
 
         parent_command = Command("snapshot", subcommands=subcommands)
 
         parsed = parent_command.parse_args("snapshot", "create", "-R", "/source", "/target")
+        self.assertEqual(parsed.commands, ["snapshot", "create"])
+        self.assertEqual(parsed.args, ["/source", "/target"])
+        self.assertEqual(parsed.flags, ["-R"])
 
-        self.assertEqual(len(parsed.args), 2)
-        self.assertEqual(parsed.args[0], "/source")
-        self.assertEqual(parsed.args[1], "/target")
-        self.assertEqual(parsed.)
+        parsed = parent_command.parse_args("snapshot", "list")
+        self.assertEqual(parsed.commands, ["snapshot", "list"])
+        self.assertEqual(parsed.args, [])
+        self.assertEqual(parsed.flags, [])
 
         parsed = parent_command.parse_args("snapshot", "create", "/source", "/target")
+        self.assertEqual(parsed.commands, ["snapshot", "create"])
+        self.assertEqual(parsed.args, ["/source", "/target"])
+        self.assertEqual(parsed.flags, [])
+
         parsed = parent_command.parse_args("snapshot", "delete", "/snapshot")
-        parsed = parent_command.parse_args("snapshot", "delete", "-R", "/snapshot")
+        self.assertEqual(parsed.commands, ["snapshot", "delete"])
+        self.assertEqual(parsed.args, ["/snapshot"])
+        self.assertEqual(parsed.flags, [])
+
         parsed = parent_command.parse_args("snapshot", "delete", "-R", "/snapshot1", "/snapshot2")
+        self.assertEqual(parsed.commands, ["snapshot", "delete"])
+        self.assertEqual(parsed.args, ["/snapshot1", "/snapshot2"])
+        self.assertEqual(parsed.flags, ["-R"])
+
+        parsed = parent_command.parse_args("snapshot", "delete", "/snapshot1", "/snapshot2", "-r")
+        self.assertEqual(parsed.commands, ["snapshot", "delete"])
+        self.assertEqual(parsed.args, ["/snapshot1", "/snapshot2"])
+        self.assertEqual(parsed.flags, ["-r"])
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)
