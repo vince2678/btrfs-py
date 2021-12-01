@@ -24,7 +24,7 @@ class CommandResult:
 
 class Command:
 
-    def __init__(self, name, expected_args = 0, flags = [], subcommands = []) -> None:
+    def __init__(self, name, expected_args = 0, flags = [], subcommands = [], help = "") -> None:
         ''' Initialise a Command with name, accepting expected_args as the count
             of positional arguments, and taking flags, with subcommands.
 
@@ -38,14 +38,11 @@ class Command:
         self.expected_args = expected_args
         self.flags = flags
         self.subcommands = {v.name:v for v in subcommands}
+        self.help = help
     
-    def add_subcommand(self, command) -> None:
+    def usage() -> None:
+        ''' Return usage text
         '''
-        '''
-        self.subcommands[command.name] = command
-
-    def add_flag(self, flag) -> None:
-        self.flags.add(flag)
 
     def parse_args(self, args = []) -> CommandResult:
         ''' Parse args specified, where args is an iterable, and
